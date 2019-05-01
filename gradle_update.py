@@ -8,6 +8,7 @@ def update_build_file(folder, gradle_version, plugin_version):
     build_file = os.path.join(folder, 'build.gradle')
     if not file_exists(build_file):
         return
+    # Add google() repo
     content = file_read(build_file)
     match = re.search(r'google\(\)', content)
     if match:
@@ -16,15 +17,23 @@ def update_build_file(folder, gradle_version, plugin_version):
         print "Fixing build.gradle"
         content = re.sub(r'jcenter\(\)', r'google()\n\tjcenter()', content)
         file_write(build_file, content)
-
+    # update gradle plugin
     content = re.sub(r'build:gradle:\d.\d.\d', r'build:gradle:' + plugin_version, content)
     file_write(build_file, content)
-
+    # update wrapper file
     wrapper_file = os.path.join(folder, 'gradle', 'wrapper', 'gradle-wrapper.properties')
     print "Modify wrapper file: " + wrapper_file
     content = file_read(wrapper_file)
     content = re.sub(r'distributionUrl=.*', r'distributionUrl=https\\://services.gradle.org/distributions/gradle-' + gradle_version + '-all.zip', content)
     file_write(wrapper_file, content)
+    # Update app/build.gradle
+    app_build_file = os.path.join(folder, 'app', 'build.gradle')
+    content = file_read(app_build_file)
+    # remove buildToolVersion
+    content = re.sub(r'buildToolsVersion.*', r'', content)
+    # change compile to implementation
+    content = re.sub(r'  compile ', r'  implementation ', content)
+    file_write(app_build_file, content)
 
 def update_gradle(root_path, gradle_version, plugin_version):
     for root, dirs, files in os.walk(root_path, topdown=True):
