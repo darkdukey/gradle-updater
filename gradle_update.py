@@ -1,6 +1,25 @@
 
 import os
+import re
 from common import *
+
+def update_build_file(folder):
+    # Check for build.gradle file
+    build_file = os.path.join(folder, 'build.gradle')
+    if not file_exists(build_file):
+        return
+    
+    content = file_read(build_file)
+
+    match = re.search(r'google\(\)', content)
+    if match:
+        print "build.gradle is ready for update"
+        return
+    else:
+        print "Fixing build.gradle"
+        content = re.sub(r'jcenter\(\)', r'google()\n\tjcenter()', content)
+    
+    file_write(build_file, content)
 
 def update_gradle(root_path, gradle_version):
     for root, dirs, files in os.walk(root_path, topdown=True):
@@ -8,9 +27,10 @@ def update_gradle(root_path, gradle_version):
             if "gradlew" == f:
                 print "root:" + root
                 print "file:" + f
-                # abs_path = os.path.normpath(root)
                 abs_path = os.path.abspath(os.path.join(root_path, root))
                 os.chdir(abs_path)
+                # Fix build.gradle for older versions
+                update_build_file(abs_path)
                 os.system("gradlew wrapper --gradle-version=" + gradle_version + " --distribution-type=all")
 
 def main():

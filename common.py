@@ -23,11 +23,14 @@ def mkdir(src):
 def get_curr_path():
     return os.path.dirname(os.path.realpath(__file__))
 
-def read_file(path):
+def file_exists(path):
+    return os.path.isfile(path)
+
+def file_read(path):
     # print "path: " + path
     with open(path, "r") as target_file:
         return target_file.read()
 
-def write_file(path, data):
+def file_write(path, data):
     with open(path, "w") as text_file:
         text_file.write(data)
