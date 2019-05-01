@@ -3,25 +3,30 @@ import os
 import re
 from common import *
 
-def update_build_file(folder):
+def update_build_file(folder, gradle_version, plugin_version):
     # Check for build.gradle file
     build_file = os.path.join(folder, 'build.gradle')
     if not file_exists(build_file):
         return
-    
     content = file_read(build_file)
-
     match = re.search(r'google\(\)', content)
     if match:
         print "build.gradle is ready for update"
-        return
     else:
         print "Fixing build.gradle"
         content = re.sub(r'jcenter\(\)', r'google()\n\tjcenter()', content)
-    
+        file_write(build_file, content)
+
+    content = re.sub(r'build:gradle:\d.\d.\d', r'build:gradle:' + plugin_version, content)
     file_write(build_file, content)
 
-def update_gradle(root_path, gradle_version):
+    wrapper_file = os.path.join(folder, 'gradle', 'wrapper', 'gradle-wrapper.properties')
+    print "Modify wrapper file: " + wrapper_file
+    content = file_read(wrapper_file)
+    content = re.sub(r'distributionUrl=.*', r'distributionUrl=https\\://services.gradle.org/distributions/gradle-' + gradle_version + '-all.zip', content)
+    file_write(wrapper_file, content)
+
+def update_gradle(root_path, gradle_version, plugin_version):
     for root, dirs, files in os.walk(root_path, topdown=True):
         for f in files:
             if "gradlew" == f:
@@ -30,23 +35,27 @@ def update_gradle(root_path, gradle_version):
                 abs_path = os.path.abspath(os.path.join(root_path, root))
                 os.chdir(abs_path)
                 # Fix build.gradle for older versions
-                update_build_file(abs_path)
+                update_build_file(abs_path, gradle_version, plugin_version)
                 os.system("gradlew wrapper --gradle-version=" + gradle_version + " --distribution-type=all")
 
 def main():
     # find all android studio projects under current path
     from optparse import OptionParser
-    parser = OptionParser(usage='usage: %prog root_directory -v 5.4.1')
-    parser.add_option('-v', '--version',dest='version', help="Version for gradle")
+    parser = OptionParser(usage='usage: %prog root_directory -v 5.4.1 -p 3.4.0')
+    parser.add_option('-v', '--version',dest='version', help="Gradle version")
+    parser.add_option('-p', '--plugin', dest='plugin', help="Gradle Plugin version")
     (opts, args) = parser.parse_args()
 
     if not opts.version:
         parser.error('please specify gradle version with -v')
 
+    if not opts.plugin:
+        parser.error('Please specify gradle plugin version with -p')
+
     if len(args) < 1:
         parser.error("Please specify root directory")
     else:
-        update_gradle(args[0], opts.version)
+        update_gradle(args[0], opts.version, opts.plugin)
 
 # ---------- main -------------
 if __name__ == '__main__':
