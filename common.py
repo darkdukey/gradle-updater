@@ -27,9 +27,12 @@ def file_exists(path):
     return os.path.isfile(path)
 
 def file_read(path):
-    # print "path: " + path
-    with open(path, "r") as target_file:
-        return target_file.read()
+    if file_exists(path):
+        with open(path, "r") as target_file:
+            return target_file.read()
+    else:
+        print "File not exist: " + path
+        return ""
 
 def file_write(path, data):
     with open(path, "w") as text_file:

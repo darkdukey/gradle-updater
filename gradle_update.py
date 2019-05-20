@@ -24,21 +24,24 @@ def update_build_file(folder, gradle_version, plugin_version):
     wrapper_file = os.path.join(folder, 'gradle', 'wrapper', 'gradle-wrapper.properties')
     print "Modify wrapper file: " + wrapper_file
     content = file_read(wrapper_file)
-    content = re.sub(r'distributionUrl=.*', r'distributionUrl=https\\://services.gradle.org/distributions/gradle-' + gradle_version + '-all.zip', content)
-    file_write(wrapper_file, content)
+    if content:
+        content = re.sub(r'distributionUrl=.*', r'distributionUrl=https\\://services.gradle.org/distributions/gradle-' + gradle_version + '-all.zip', content)
+        file_write(wrapper_file, content)
     # Update app/build.gradle
     app_build_file = os.path.join(folder, 'app', 'build.gradle')
     content = file_read(app_build_file)
-    # remove buildToolVersion
-    content = re.sub(r'buildToolsVersion.*', r'', content)
-    # change compile to implementation
-    content = re.sub(r'  compile ', r'  implementation ', content)
-    file_write(app_build_file, content)
+    if content:
+        # remove buildToolVersion
+        content = re.sub(r'buildToolsVersion.*', r'', content)
+        # change compile to implementation
+        content = re.sub(r'  compile ', r'  implementation ', content)
+        file_write(app_build_file, content)
 
 def update_gradle(root_path, gradle_version, plugin_version):
     for root, dirs, files in os.walk(root_path, topdown=True):
         for f in files:
             if "gradlew" == f:
+                print '== Update Gradlew =='
                 print "root:" + root
                 print "file:" + f
                 abs_path = os.path.abspath(os.path.join(root_path, root))
@@ -46,6 +49,13 @@ def update_gradle(root_path, gradle_version, plugin_version):
                 # Fix build.gradle for older versions
                 update_build_file(abs_path, gradle_version, plugin_version)
                 os.system("gradlew wrapper --gradle-version=" + gradle_version + " --distribution-type=all")
+            elif "build.gradle" == f:
+                print '== update build.gradle file =='
+                print "root:" + root
+                print "file:" + f
+                abs_path = os.path.abspath(os.path.join(root_path, root))
+                os.chdir(abs_path)
+                update_build_file(abs_path, gradle_version, plugin_version)
 
 def main():
     # find all android studio projects under current path
