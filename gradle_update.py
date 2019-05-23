@@ -58,7 +58,7 @@ def update_gradle(root_path, gradle_version, plugin_version):
 def main():
     # find all android studio projects under current path
     from optparse import OptionParser
-    parser = OptionParser(usage='usage: %prog root_directory -v 5.4.1 -p 3.4.0')
+    parser = OptionParser(usage='usage: %prog root_directory -v 5.4.1 -p 3.4.1')
     parser.add_option('-v', '--version',dest='version', help="Gradle version")
     parser.add_option('-p', '--plugin', dest='plugin', help="Gradle Plugin version")
     (opts, args) = parser.parse_args()
