@@ -1,61 +1,59 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 import os
 import re
 from common import *
 
-def update_build_file(folder, gradle_version, plugin_version):
-    # Check for build.gradle file
-    build_file = os.path.join(folder, 'build.gradle')
-    if not file_exists(build_file):
-        return
+def update_gradle_wrapper(path, gradle_version):
+    print('== [✔] Update gradle wrapper')
+    content = file_read(path)
+    if content:
+        content = re.sub(r'distributionUrl=.*', r'distributionUrl=https\\://services.gradle.org/distributions/gradle-' + gradle_version + '-all.zip', content)
+        file_write(path, content)
+
+def update_gradle_build(path, plugin_version):
+    # Decide the type of build.gradle
+    print('== Checking build.gradle file')
+    content = file_read(path)
+    match = re.search(r'build:gradle:', content)
+    if match:
+        print('== Found Root Gradle')
+        update_root_gradle(path, plugin_version)
+    else:
+        print('== Found Child Gradle')
+        update_child_gradle(path, plugin_version)
+
+def update_root_gradle(path, plugin_version):
     # Add google() repo
-    content = file_read(build_file)
+    content = file_read(path)
     match = re.search(r'google\(\)', content)
     if match:
         print "build.gradle is ready for update"
     else:
         print "Fixing build.gradle"
-        content = re.sub(r'jcenter\(\)', r'google()\n\tjcenter()', content)
-        file_write(build_file, content)
+        content = re.sub(r'jcenter\(\)', r'google()\n\t\tjcenter()', content)
+        file_write(path, content)
     # update gradle plugin
     content = re.sub(r'build:gradle:\d.\d.\d', r'build:gradle:' + plugin_version, content)
-    file_write(build_file, content)
-    # update wrapper file
-    wrapper_file = os.path.join(folder, 'gradle', 'wrapper', 'gradle-wrapper.properties')
-    print "Modify wrapper file: " + wrapper_file
-    content = file_read(wrapper_file)
-    if content:
-        content = re.sub(r'distributionUrl=.*', r'distributionUrl=https\\://services.gradle.org/distributions/gradle-' + gradle_version + '-all.zip', content)
-        file_write(wrapper_file, content)
-    # Update app/build.gradle
-    app_build_file = os.path.join(folder, 'app', 'build.gradle')
-    content = file_read(app_build_file)
+    file_write(path, content)
+
+def update_child_gradle(path, plugin_version):
+    content = file_read(path)
     if content:
         # remove buildToolVersion
         content = re.sub(r'buildToolsVersion.*', r'', content)
         # change compile to implementation
         content = re.sub(r'  compile ', r'  implementation ', content)
-        file_write(app_build_file, content)
+        file_write(path, content)
 
 def update_gradle(root_path, gradle_version, plugin_version):
     for root, dirs, files in os.walk(root_path, topdown=True):
         for f in files:
-            if "gradlew" == f:
-                print '== Update Gradlew =='
-                print "root:" + root
-                print "file:" + f
-                abs_path = os.path.abspath(os.path.join(root_path, root))
-                os.chdir(abs_path)
-                # Fix build.gradle for older versions
-                update_build_file(abs_path, gradle_version, plugin_version)
-                os.system("gradlew wrapper --gradle-version=" + gradle_version + " --distribution-type=all")
-            elif "build.gradle" == f:
-                print '== update build.gradle file =='
-                print "root:" + root
-                print "file:" + f
-                abs_path = os.path.abspath(os.path.join(root_path, root))
-                os.chdir(abs_path)
-                update_build_file(abs_path, gradle_version, plugin_version)
+            if 'gradle-wrapper.properties' == f:
+                update_gradle_wrapper(os.path.join(root, f), gradle_version)
+            elif 'build.gradle' == f:
+                update_gradle_build(os.path.join(root, f), plugin_version)
 
 def main():
     # find all android studio projects under current path
