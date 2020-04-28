@@ -29,9 +29,9 @@ def update_root_gradle(path, plugin_version):
     content = file_read(path)
     match = re.search(r'google\(\)', content)
     if match:
-        print "build.gradle is ready for update"
+        print("build.gradle is ready for update")
     else:
-        print "Fixing build.gradle"
+        print("Fixing build.gradle")
         content = re.sub(r'jcenter\(\)', r'google()\n\t\tjcenter()', content)
         file_write(path, content)
     # update gradle plugin
@@ -58,7 +58,7 @@ def update_gradle(root_path, gradle_version, plugin_version):
 def main():
     # find all android studio projects under current path
     from optparse import OptionParser
-    parser = OptionParser(usage='usage: %prog root_directory -v 5.4.1 -p 3.4.1')
+    parser = OptionParser(usage='usage: %prog root_directory -v 5.6.4 -p 3.6.1')
     parser.add_option('-v', '--version',dest='version', help="Gradle version")
     parser.add_option('-p', '--plugin', dest='plugin', help="Gradle Plugin version")
     (opts, args) = parser.parse_args()

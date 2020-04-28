@@ -31,7 +31,7 @@ def file_read(path):
         with open(path, "r") as target_file:
             return target_file.read()
     else:
-        print "File not exist: " + path
+        print("File not exist: " + path)
         return ""
 
 def file_write(path, data):
